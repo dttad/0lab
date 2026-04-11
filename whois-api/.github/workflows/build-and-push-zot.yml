@@ -23,13 +23,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          REGISTRY="${ZOT_REGISTRY:-localhost:5000}"
+          REGISTRY="${ZOT_REGISTRY:-}"
           REPOSITORY="${ZOT_REPOSITORY:-whois-api}"
+          if [ -z "$REGISTRY" ]; then
+            echo "ZOT_REGISTRY secret is required and must point to the actual Zot host reachable from the runner." >&2
+            exit 1
+          fi
           echo "registry=$REGISTRY" >> "$GITHUB_OUTPUT"
           echo "image=$REGISTRY/$REPOSITORY" >> "$GITHUB_OUTPUT"
         env:
           ZOT_REGISTRY: ${{ secrets.ZOT_REGISTRY }}
           ZOT_REPOSITORY: ${{ secrets.ZOT_REPOSITORY }}
+
+      - name: Show resolved image target
+        run: |
+          echo "Registry: ${{ steps.meta.outputs.registry }}"
+          echo "Image: ${{ steps.meta.outputs.image }}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -50,3 +59,10 @@ jobs:
           tags: |
             ${{ steps.meta.outputs.image }}:latest
             ${{ steps.meta.outputs.image }}:${{ github.sha }}
+
+      - name: Verify pushed tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx imagetools inspect "${{ steps.meta.outputs.image }}:latest"
+          docker buildx imagetools inspect "${{ steps.meta.outputs.image }}:${{ github.sha }}"

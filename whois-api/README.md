@@ -44,4 +44,9 @@ The workflow in `.github/workflows/build-and-push-zot.yml` expects these repo se
 
 - `ZOT_USERNAME` (you said: `dat`)
 - `ZOT_PASSWORD` (you said: `dat123`)
-- Optional: `ZOT_REGISTRY` (e.g. `localhost:5000`) and `ZOT_REPOSITORY` (e.g. `whois-api`)
+- Required: `ZOT_REGISTRY` (the actual Zot host reachable from the GitHub runner, for example `zot.example.com:5000`)
+- Optional: `ZOT_REPOSITORY` (for example `whois-api`)
+
+This workflow only builds and pushes an image to Zot. It does not deploy or start a container on your server.
+If `ZOT_REGISTRY` points to the wrong host, the workflow can succeed while the image appears in a different registry
+than the one you are checking.
