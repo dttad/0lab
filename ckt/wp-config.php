@@ -18,6 +18,9 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
     $_SERVER['HTTPS'] = 'on';
 }
 
+// Allow WordPress to write files directly (needed for plugin/theme updates in Docker)
+define('FS_METHOD', 'direct');
+
 // Environment
 define('WP_ENVIRONMENT_TYPE', getenv('WP_ENV') ?: 'staging');
 define('WP_DEBUG',     getenv('WP_DEBUG') === 'true');
