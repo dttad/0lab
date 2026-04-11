@@ -1,0 +1,20 @@
+---
+- name: Shutdown ws.local
+  hosts: ws
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Confirm we are not running against localhost
+      ansible.builtin.assert:
+        that:
+          - inventory_hostname not in ["localhost", "127.0.0.1"]
+        fail_msg: "Refusing to run against localhost"
+
+    - name: Shutdown now (SSH will disconnect)
+      ansible.builtin.command: shutdown -h now
+      async: 1
+      poll: 0
+      changed_when: true
+      failed_when: false
+
