@@ -1,0 +1,40 @@
+name: Deploy CKT
+
+on:
+  push:
+    branches:
+      - staging
+      # - main
+    paths:
+      - 'ckt/**'
+
+jobs:
+  deploy-staging:
+    if: github.ref == 'refs/heads/staging'
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        run: |
+          set -e
+          cd /home/dat/Sources/0lab/ckt
+
+          echo "==> Pull latest code"
+          git pull origin staging
+
+          echo "==> Rebuild if Dockerfile changed, otherwise restart"
+          docker compose up -d --build
+
+          echo "==> Flush rewrite rules"
+          docker compose exec -T wordpress bash -c \
+            "php wp-cli.phar rewrite flush --allow-root 2>/dev/null || true"
+
+          echo "==> Done — https://ckt.d4t0.com"
+
+  # deploy-production:
+  #   if: github.ref == 'refs/heads/main'
+  #   runs-on: self-hosted
+  #   steps:
+  #     ...
