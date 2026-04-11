@@ -1,4 +1,4 @@
-name: build-and-push-zot
+name: Build and push whois-api
 
 on:
   push:
@@ -53,8 +53,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: Dockerfile
+          context: ./whois-api
+          file: ./whois-api/Dockerfile
           push: true
           tags: |
             ${{ steps.meta.outputs.image }}:latest
