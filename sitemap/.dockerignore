@@ -1,0 +1,11 @@
+.git
+.gitignore
+*.md
+*.sh
+*.ipynb
+save.py
+requirements-dev.txt
+output/
+__pycache__/
+*.pyc
+.env

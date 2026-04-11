@@ -1,0 +1,61 @@
+name: Build sitemap-crawler
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+    paths:
+      - 'sitemap/**'
+
+env:
+  REGISTRY: localhost:5000
+  IMAGE: sitemap-crawler
+
+jobs:
+  build-and-push:
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tags
+        id: meta
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          BRANCH=${GITHUB_REF_NAME}
+          echo "sha=${SHA}" >> $GITHUB_OUTPUT
+          echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
+          # tag 'latest' only on main
+          if [ "$BRANCH" = "main" ]; then
+            echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE }}:${SHA},${{ env.REGISTRY }}/${{ env.IMAGE }}:latest" >> $GITHUB_OUTPUT
+          else
+            echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE }}:${SHA},${{ env.REGISTRY }}/${{ env.IMAGE }}:${BRANCH}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Log in to Zot registry
+        run: echo "${{ secrets.ZOT_PASSWORD }}" | docker login ${{ env.REGISTRY }} -u "${{ secrets.ZOT_USER }}" --password-stdin
+
+      - name: Build image
+        run: |
+          cd sitemap
+          docker build \
+            --label "org.opencontainers.image.revision=${{ steps.meta.outputs.sha }}" \
+            --label "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.meta.outputs.sha }} \
+            .
+
+      - name: Push all tags
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.meta.outputs.sha }}
+
+          for tag in $(echo "${{ steps.meta.outputs.tags }}" | tr ',' ' '); do
+            if [ "$tag" != "${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.meta.outputs.sha }}" ]; then
+              docker tag ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.meta.outputs.sha }} "$tag"
+              docker push "$tag"
+            fi
+          done
+
+      - name: Cleanup local image
+        if: always()
+        run: docker rmi ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.meta.outputs.sha }} || true
