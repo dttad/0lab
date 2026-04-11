@@ -1,0 +1,21 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# WordPress uploads (use Docker volume)
+wp-content/uploads/
+
+# Litespeed cache
+wp-content/litespeed/
+wp-content/cache/
+
+# Logs & temp
+*.log
+wp-content/temp-write-test-*
+wp-content/upgrade/
+wp-content/upgrade-temp-backup/
+
+# OS
+.DS_Store
+Thumbs.db
